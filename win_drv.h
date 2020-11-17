@@ -44,7 +44,7 @@ extern "C" {
  **********************/
 extern bool lv_win_exit_flag;
 extern lv_disp_t *lv_windows_disp;
-
+bool win_drv_wheel_read(lv_indev_t *drv, lv_indev_data_t * data);
 HWND windrv_init(void);
 
 /**********************

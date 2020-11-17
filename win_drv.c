@@ -35,6 +35,7 @@ static void win_drv_flush(lv_disp_t *drv, lv_area_t *area, const lv_color_t * co
 static void win_drv_fill(int32_t x1, int32_t y1, int32_t x2, int32_t y2, lv_color_t color);
 static void win_drv_map(int32_t x1, int32_t y1, int32_t x2, int32_t y2, const lv_color_t * color_p);
 static bool win_drv_read(lv_indev_t *drv, lv_indev_data_t * data);
+bool win_drv_wheel_read(lv_indev_t *drv, lv_indev_data_t * data);
 static void msg_handler(void *param);
 
 static COLORREF lv_color_to_colorref(const lv_color_t color);
@@ -55,7 +56,7 @@ lv_disp_t *lv_windows_disp;
 static HWND hwnd;
 static uint32_t *fbp = NULL; /* Raw framebuffer memory */
 static bool mouse_pressed;
-static int mouse_x, mouse_y;
+static int mouse_x, mouse_y, enc_diff;
 
 
 /**********************
@@ -212,7 +213,13 @@ static void msg_handler(void *param)
     data->point.y = mouse_y;
     return false;
 }
-
+bool win_drv_wheel_read(lv_indev_t *drv, lv_indev_data_t * data)
+{
+    data->state = mouse_pressed ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+    data->enc_diff = enc_diff;
+    enc_diff = 0;
+    return false;
+}
  static void on_paint(void)
  {
     HBITMAP bmp = CreateBitmap(WINDOW_HOR_RES, WINDOW_VER_RES, 1, 32, fbp);
@@ -280,6 +287,9 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         SetTimer(hwnd, 0, 10, (TIMERPROC)lv_task_handler);
         SetTimer(hwnd, 1, 25, NULL);
 
+        return 0;
+    case WM_MOUSEWHEEL                   :
+        enc_diff = GET_WHEEL_DELTA_WPARAM(wParam)/-120;
         return 0;
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
